@@ -1,4 +1,4 @@
-// Copyright © 2023 Kaleido, Inc.
+// Copyright © 2024 Kaleido, Inc.
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -80,6 +80,9 @@ const (
 
 	// HTTPCustomClient - unit test only - allows injection of a custom HTTP client to resty
 	HTTPCustomClient = "customClient"
+
+	// TrustedCustomCAs is an array of paths for custom CA certs
+	TrustedCustomCAs = "trustedCustomCAs"
 )
 
 func InitConfig(conf config.Section) {
@@ -102,6 +105,7 @@ func InitConfig(conf config.Section) {
 	conf.AddKnownKey(HTTPExpectContinueTimeout, defaultHTTPExpectContinueTimeout)
 	conf.AddKnownKey(HTTPPassthroughHeadersEnabled, defaultHTTPPassthroughHeadersEnabled)
 	conf.AddKnownKey(HTTPCustomClient)
+	conf.AddKnownKey(TrustedCustomCAs, []string{})
 
 	tlsConfig := conf.SubSection("tls")
 	fftls.InitTLSConfig(tlsConfig)
@@ -128,6 +132,7 @@ func GenerateConfig(ctx context.Context, conf config.Section) (*Config, error) {
 			HTTPExpectContinueTimeout:     fftypes.FFDuration(conf.GetDuration(HTTPExpectContinueTimeout)),
 			HTTPPassthroughHeadersEnabled: conf.GetBool(HTTPPassthroughHeadersEnabled),
 			HTTPCustomClient:              conf.Get(HTTPCustomClient),
+			TrustedCustomCAs:              conf.GetStringSlice(TrustedCustomCAs),
 		},
 	}
 	tlsSection := conf.SubSection("tls")

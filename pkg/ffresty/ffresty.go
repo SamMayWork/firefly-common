@@ -75,6 +75,7 @@ type HTTPConfig struct {
 	TLSClientConfig               *tls.Config                               `json:"-"` // should be built from separate TLSConfig using fftls utils
 	OnCheckRetry                  func(res *resty.Response, err error) bool `json:"-"` // response could be nil on err
 	OnBeforeRequest               func(req *resty.Request) error            `json:"-"` // called before each request, even retry
+	TrustedCustomCAs              []string                                  `ffstruct:"RESTConfig" json:"trustedCustomCAs,omitempty"`
 }
 
 // OnAfterResponse when using SetDoNotParseResponse(true) for streaming binary replies,
@@ -156,6 +157,13 @@ func NewWithConfig(ctx context.Context, ffrestyConfig Config) (client *resty.Cli
 
 	if ffrestyConfig.ProxyURL != "" {
 		client.SetProxy(ffrestyConfig.ProxyURL)
+	}
+
+	if ffrestyConfig.TrustedCustomCAs != nil && len(ffrestyConfig.TrustedCustomCAs) > 0 {
+		for _, path := range ffrestyConfig.TrustedCustomCAs {
+			log.L(ctx).Debugf("Adding custom CA cert to trusted certificates: %s", path)
+			client.SetRootCertificate(path)
+		}
 	}
 
 	client.SetTimeout(time.Duration(ffrestyConfig.HTTPRequestTimeout))

@@ -47,6 +47,7 @@ func TestWSConfigGeneration(t *testing.T) {
 	utConf.Set(HTTPTLSHandshakeTimeout, 1)
 	utConf.Set(HTTPExpectContinueTimeout, 1)
 	utConf.Set(HTTPPassthroughHeadersEnabled, true)
+	utConf.Set(TrustedCustomCAs, []string{"/etc/certs/customca1.pem", "/etc/certs/customca2.pem"})
 
 	ctx := context.Background()
 	config, err := GenerateConfig(ctx, utConf)
@@ -68,6 +69,7 @@ func TestWSConfigGeneration(t *testing.T) {
 	assert.Equal(t, fftypes.FFDuration(1000000), config.HTTPConnectionTimeout)
 	assert.Equal(t, 1, config.HTTPMaxIdleConns)
 	assert.Equal(t, "custom value", config.HTTPHeaders.GetString("custom-header"))
+	assert.Equal(t, []string{"/etc/certs/customca1.pem", "/etc/certs/customca2.pem"}, config.TrustedCustomCAs)
 }
 
 func TestWSConfigTLSGenerationFail(t *testing.T) {

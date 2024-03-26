@@ -512,3 +512,28 @@ func TestMTLSClientWithServer(t *testing.T) {
 	}
 	cancelCtx()
 }
+
+func TestAdditionOfTrustedCustomCAs(t *testing.T) {
+	ctx := context.Background()
+
+	resetConf()
+
+	// Resty tries to load the certificate directly from disk so need to set up a custom
+	// file for it to read from and then clean this up from the disk
+	tempCAFile, err := os.CreateTemp("", "sample-ca.pem")
+	assert.NoError(t, err)
+	tempCAFile.WriteString("-----BEGIN CERTIFICATE-----MIIDazCCAlOgAwIBAgIUFDOQYMW6FZa/KZdRuC9BXzDwlfAwDQYJKoZIhvcNAQELBQAwRTELMAkGA1UEBhMCQVUxEzARBgNVBAgMClNvbWUtU3RhdGUxITAfBgNVBAoMGEludGVybmV0IFdpZGdpdHMgUHR5IEx0ZDAeFw0yNDAzMjYxNTQ3MTRaFw0yOTAzMjUxNTQ3MTRaMEUxCzAJBgNVBAYTAkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBXaWRnaXRzIFB0eSBMdGQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCvIwX/dOyka0HOyQrY5a6TqkT/WMUMB3zdDNUob5X1THxigwEOW4Sv+Q19b1HoYLaurlD08UPEZ3OGUVPSx51kpkJgVLZCgHH2tHllUcu9uVIMo57Q0iEUdor8KXQvTTd3kZXSt8qvh02anVwttISZgEQDWhFw5LyLvn3tnN53mVkkdqrVv6ScG9hhpfmsifAEgs0g41KP5Zsdoj8Q/NS4rzw7h8LYUgQKPDLKlPD7nrdoo6CDk5fnm+RcmBKIXG5AQ6DVEa+MrFSCGRC4T9GxbY7nKHnYGRtYzyrnJ3hHszsPhwOx+pTWZEWVSS0ZN24ofuAToMZvTJGWZRBOp44DAgMBAAGjUzBRMB0GA1UdDgQWBBSnRu3t4HSi+FsEz76lFMhUvWebijAfBgNVHSMEGDAWgBSnRu3t4HSi+FsEz76lFMhUvWebijAPBgNVHRMBAf8EBTADAQH/MA0GCSqGSIb3DQEBCwUAA4IBAQAqZ9g6dzI9+bNHpF8oPGsecL2OJSSL43dokkM423izHNIBjv+yZTHPIq5QxEvWHiai+deYEU3h27iWlo9Gd8I40sqb9Ze+N0OFiOkRLk6pDT57SS/9I0ysrBauytmY2iVeCbr1Frq5i+oxY5dPY/x9EYPAua/cFR+NLFyiBnTVw1POhh+cRHv4PeABlBJzG9xXp8xh48zK0YiWP1bDW3ngk+WnB5Lb8Fcny7AdPt+31lT7RmN6wBCcRV4HXwyt3esfXUaC9mLUQRPvFtnX73BhSBRtGM/YzKdfVEjttgAoKGh/CzAZ6uD964VPIH82ItWciM7F/gYSMFjEs6jpd5wB-----END CERTIFICATE-----")
+
+	defer os.Remove(tempCAFile.Name())
+
+	utConf.Set(TrustedCustomCAs, []string{tempCAFile.Name()})
+
+	ffrestyConfig, err := GenerateConfig(ctx, utConf)
+	assert.NoError(t, err)
+
+	c := NewWithConfig(ctx, *ffrestyConfig)
+
+	transport, err := c.Transport()
+	assert.Nil(t, err)
+	assert.NotNil(t, transport.TLSClientConfig.RootCAs)
+}
